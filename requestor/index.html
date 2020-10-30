@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cars</title>
+
+  <script
+  src="https://code.jquery.com/jquery-3.5.1.min.js"
+  integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+  crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+</head>
+<body>
+  <h1 class="text-center">Cars</h1>
+  <div class="container border rounded p-3">
+    <div class="d-flex justify-content-center">
+      <button type="button" class="btn btn-primary btn-lg mb-3" id="allCarsRefresh">Refresh</button>
+    </div>
+
+    <ul class="nav nav-tabs mb-2" id="carsTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <a class="nav-link active" id="all-cars-tab" data-toggle="tab" href="#all-cars" role="tab" aria-controls="all-cars" aria-selected="true">All Cars</a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link" id="constructor-tab" data-toggle="tab" href="#constructor" role="tab" aria-controls="constructor" aria-selected="false">Cars by Constructor</a>
+      </li>
+      <li class="nav-item" role="presentation">
+        <a class="nav-link" id="constructor-engine-tab" data-toggle="tab" href="#constructor-engine" role="tab" aria-controls="constructor-engine" aria-selected="false">Cars by Constructor with Engine</a>
+      </li>
+    </ul>
+    <div class="tab-content" id="carsTabContent">
+      <!-- All Cars -->
+      <div class="tab-pane fade show active" id="all-cars" role="tabpanel" aria-labelledby="all-cars-tab">
+        <div class="content-cars row justify-content-around"></div>
+      </div>
+
+      <!-- Cars by Constructor -->
+      <div class="tab-pane fade" id="constructor" role="tabpanel" aria-labelledby="constructor-tab">
+        <form id="consForm" class="d-flex flex-column mb-3">
+          <div>
+            <label for="carsConsConstructors">Constructor:</label>
+            <select name="carsConsConstructors" class="constructors-select" id="carsConsConstructors"></select>
+          </div>
+          <div>
+            <button class="btn btn-sm btn-primary" type="submit">Fetch</button>
+          </div>
+        </form>
+        <div class="content-cars row justify-content-around"></div>
+      </div>
+
+      <!-- Cars by Constructor with Engine -->
+      <div class="tab-pane fade" id="constructor-engine" role="tabpanel" aria-labelledby="constructor-engine-tab">
+        <div class="content-cars row justify-content-around"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="text-center my-3">Created by <a href="https://github.com/grallm">Malo Grall</a> for the Web Services course (DKIT) - 2020</footer>
+
+  <script>
+  // Isolate the code
+  $(document).ready(function () {
+    /**
+     * Fetch with Ajax data from DB
+     */
+    const fetchCars = (params) => {
+      const { carConstructor, engine } = params || {}
+      let carsContainerId, getParams = ''
+      
+      if (carConstructor && engine) {
+        carsContainerId = 'constructor-engine'
+        getParams = `constructor=${carConstructor}&engine=${engine}`
+  
+      } else if (carConstructor) {
+        getParams = `constructor=${carConstructor}`
+        carsContainerId = 'constructor'
+      } else {
+        // No fields = all cars
+        carsContainerId = 'all-cars'
+      }
+  
+      // Select the container to fill
+      const carsContainer = $(`#${carsContainerId} .content-cars`)
+      
+      $.getJSON(`./requests.php?${getParams}`, function (dataFetched) {
+        console.log(dataFetched)
+        console.log(getParams)
+        console.log(carsContainerId)
+        // Transform data to HTML
+        let carsHtml = ''
+        const carConstructors = new Set()
+        for (const car of dataFetched) {
+          carConstructors.add(car.constructor)
+
+          carsHtml += `
+            <div clas="col-sm mb-3">
+              <div class="card h-100" style="width: 18rem;">
+                <img src="${car.image}" class="card-img-top" alt="${car.name}">
+                <div class="card-body">
+                  <h5 class="card-title">${car.name}</h5>
+                  <div class="card-text">
+                    <ul>
+                      <li>Constructor: ${car.constructor}</li>
+                      <li>Engine: ${car.engine}</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `
+        }
+  
+        carsContainer.html(carsHtml || '<h4>No cars found</h4>')
+
+        // Refresh list of all constructors when all cars fetched
+        if (!getParams) {
+          $('#carsConsConstructors').each(function () {
+            $(this).html([...carConstructors].map(carCons => `<option value="${carCons}">${carCons}</option>`).join(''))
+          })
+        }
+      })
+      .fail(function () {
+        data = 'failed'
+        console.log('failed')
+      })
+    }
+  
+    $('#allCarsRefresh').click(fetchCars())
+
+    $('#consForm').submit(function (event) {
+      event.preventDefault()
+      console.log($(this).find('.constructors-select').val())
+      fetchCars({
+        carConstructor: $(this).find('.constructors-select').val()
+      })
+    })
+  })
+  </script>
+</body>
+</html>
