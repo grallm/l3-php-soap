@@ -12,5 +12,4 @@ if (isset($_GET['constructor']) && isset($_GET['engine'])) {
 // getAllCars
 } else {
   echo $client->getAllCars();
-  // echo $client->getCarsEngineConstructor('asasd','as');
 }

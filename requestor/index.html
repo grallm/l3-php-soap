@@ -52,6 +52,19 @@
 
       <!-- Cars by Constructor with Engine -->
       <div class="tab-pane fade" id="constructor-engine" role="tabpanel" aria-labelledby="constructor-engine-tab">
+        <form id="consEngForm" class="d-flex flex-column mb-3">
+          <div>
+            <label for="carsConsEngConstructors">Constructor:</label>
+            <select name="carsConsEngConstructors" class="constructors-select" id="carsConsEngConstructors"></select>
+          </div>
+          <div>
+            <label for="carsConsEngEngines">Engine:</label>
+            <select name="carsConsEngEngines" class="engines-select" id="carsConsEngEngines"></select>
+          </div>
+          <div>
+            <button class="btn btn-sm btn-primary" type="submit">Fetch</button>
+          </div>
+        </form>
         <div class="content-cars row justify-content-around"></div>
       </div>
     </div>
@@ -85,14 +98,13 @@
       const carsContainer = $(`#${carsContainerId} .content-cars`)
       
       $.getJSON(`./requests.php?${getParams}`, function (dataFetched) {
-        console.log(dataFetched)
-        console.log(getParams)
-        console.log(carsContainerId)
         // Transform data to HTML
         let carsHtml = ''
         const carConstructors = new Set()
+        const carEngines = new Set()
         for (const car of dataFetched) {
           carConstructors.add(car.constructor)
+          carEngines.add(car.engine)
 
           carsHtml += `
             <div clas="col-sm mb-3">
@@ -114,16 +126,18 @@
   
         carsContainer.html(carsHtml || '<h4>No cars found</h4>')
 
-        // Refresh list of all constructors when all cars fetched
+        // Refresh list of all constructors and all engines when all cars fetched
         if (!getParams) {
-          $('#carsConsConstructors').each(function () {
+          $('.constructors-select').each(function () {
             $(this).html([...carConstructors].map(carCons => `<option value="${carCons}">${carCons}</option>`).join(''))
+          })
+          $('.engines-select').each(function () {
+            $(this).html([...carEngines].map(carCons => `<option value="${carCons}">${carCons}</option>`).join(''))
           })
         }
       })
       .fail(function () {
-        data = 'failed'
-        console.log('failed')
+        carsContainer.html('<h4>An error occurred</h4>')
       })
     }
   
@@ -131,9 +145,16 @@
 
     $('#consForm').submit(function (event) {
       event.preventDefault()
-      console.log($(this).find('.constructors-select').val())
       fetchCars({
         carConstructor: $(this).find('.constructors-select').val()
+      })
+    })
+
+    $('#consEngForm').submit(function (event) {
+      event.preventDefault()
+      fetchCars({
+        carConstructor: $(this).find('.constructors-select').val(),
+        engine: $(this).find('.engines-select').val()
       })
     })
   })
